@@ -8,14 +8,19 @@ require('dotenv').config({ override: true });
 const PORT = Number(process.env.PORT || 3000);
 
 const SITES = [
-  { name: 'Foxborough Way Site', lat: 41.5546253, lon: -88.2870740 },
-  { name: 'Milwaukee Ave Site', lat: 41.9030998, lon: -87.6654782 }
+  {
+    zip: '60434',
+    name: 'Victory house (8401 Foxbourgh Way Joliet IL)',
+    lat: 41.5546253,
+    lon: -88.2870740
+  },
+  {
+    zip: '60642',
+    name: 'Miracle centre (1165 N Milwaukee Avenue Chicago 60642 APT 2105)',
+    lat: 41.9030998,
+    lon: -87.6654782
+  }
 ];
-
-const ZIP_LOCATION_OVERRIDES = {
-  '60642': 'Miracle centre (1165 N Milwaukee Avenue Chicago 60642 APT 2105)',
-  '60434': 'Victory house (8401 Foxbourgh Way Joliet IL)'
-};
 
 function contentType(filePath){
   const ext = path.extname(filePath).toLowerCase();
@@ -89,11 +94,38 @@ function haversine(lat1, lon1, lat2, lon2){
   return R * 2 * Math.asin(Math.sqrt(a));
 }
 
+function normalizePhone(phone){
+  const digits = String(phone || '').replace(/\D/g, '');
+  if(digits.length === 11 && digits.startsWith('1')) return digits.slice(1);
+  return digits;
+}
+
+function fallbackByZipDistance(zip){
+  const target = Number(zip);
+  if(Number.isNaN(target)) return SITES[0].name;
+
+  let best = SITES[0];
+  let bestDelta = Infinity;
+  for(const site of SITES){
+    const current = Number(site.zip);
+    if(Number.isNaN(current)) continue;
+    const delta = Math.abs(current - target);
+    if(delta < bestDelta){
+      bestDelta = delta;
+      best = site;
+    }
+  }
+  return best.name;
+}
+
 async function assignByZip(zip){
+  const exact = SITES.find((site)=> site.zip === zip);
+  if(exact) return exact.name;
+
   try{
     const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=' + encodeURIComponent(zip);
     const data = await fetchJson(url);
-    if(!Array.isArray(data) || data.length === 0) return null;
+    if(!Array.isArray(data) || data.length === 0) return fallbackByZipDistance(zip);
 
     const targetLat = parseFloat(data[0].lat);
     const targetLon = parseFloat(data[0].lon);
@@ -109,7 +141,7 @@ async function assignByZip(zip){
     }
     return best ? best.name : null;
   }catch(err){
-    return null;
+    return fallbackByZipDistance(zip);
   }
 }
 
@@ -174,25 +206,30 @@ async function handleSubmit(req, res){
 
     try{
       const name = String(data.name || '').trim();
+      const phone = normalizePhone(data.phone || '');
       const street = String(data.street || '').trim();
       const city = String(data.city || '').trim();
       const state = String(data.state || '').trim();
       const zipMatch = String(data.zip || '').match(/\d{5}/);
       const zip = zipMatch ? zipMatch[0] : '';
 
-      if(!name || !street || !city || !state || !zip){
+      if(!name || !street || !city || !state || !zip || !/^\d{10}$/.test(phone)){
         res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ error: 'name, street, city, state, and valid 5-digit zip are required' }));
+        res.end(JSON.stringify({ error: 'name, phone (10 digits), street, city, state, and valid 5-digit zip are required' }));
         return;
       }
 
-      const assignedLocation = ZIP_LOCATION_OVERRIDES[zip]
-        || await assignByZip(zip)
-        || ('Central Hub (ZIP ' + zip + ')');
+      const assignedLocation = await assignByZip(zip);
+      if(!assignedLocation){
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'Could not assign location for the provided ZIP.' }));
+        return;
+      }
       const assignedZip = zip;
 
       await appendToSheet([
         name,
+        phone,
         street,
         city,
         state,

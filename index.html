@@ -224,6 +224,10 @@
           <input id="name" name="name" autocomplete="name" required />
         </label>
 
+        <label>Phone number
+          <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(312) 555-1234" required />
+        </label>
+
         <label>Street address
           <input id="street" name="street" autocomplete="street-address" list="streetSuggestions" required />
           <datalist id="streetSuggestions"></datalist>
@@ -304,6 +308,7 @@
       const form = document.getElementById('signup');
       const msg = document.getElementById('message');
       const submitBtn = document.getElementById('submitBtn');
+      const phoneInput = document.getElementById('phone');
       const streetInput = document.getElementById('street');
       const cityInput = document.getElementById('city');
       const stateInput = document.getElementById('state');
@@ -341,6 +346,12 @@
       function firstFiveDigits(input){
         const match = String(input || '').match(/\d{5}/);
         return match ? match[0] : '';
+      }
+
+      function normalizePhone(input){
+        const digits = String(input || '').replace(/\D/g, '');
+        if(digits.length === 11 && digits.startsWith('1')) return digits.slice(1);
+        return digits;
       }
 
       function getStateCode(address){
@@ -461,13 +472,14 @@
 
         // simple client-side validation
         const name = document.getElementById('name').value.trim();
+        const phone = normalizePhone(phoneInput.value.trim());
         const street = streetInput.value.trim();
         const city = cityInput.value.trim();
         const state = stateInput.value.trim();
         const zip = firstFiveDigits(zipInput.value.trim());
 
-        if(!name||!street||!city||!state||!/^[0-9]{5}$/.test(zip)){
-          showMessage('Please complete all fields with a valid 5-digit ZIP.', false);
+        if(!name||!street||!city||!state||!/^\d{10}$/.test(phone)||!/^[0-9]{5}$/.test(zip)){
+          showMessage('Please complete all fields with a valid phone number and 5-digit ZIP.', false);
           return;
         }
 
@@ -478,7 +490,7 @@
           const res = await fetch('/api/submit',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({name,street,city,state,zip})
+            body: JSON.stringify({name,phone,street,city,state,zip})
           });
           const rawBody = await res.text();
           let body = {};
