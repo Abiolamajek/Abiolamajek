@@ -446,6 +446,14 @@
         msg.textContent = text;
       }
 
+      function assignedZipSuffix(locationText, zip){
+        if(!zip) return '';
+        const location = String(locationText || '');
+        if(location.includes(zip)) return '';
+        if(/\bZIP\b/i.test(location)) return '';
+        return ' (ZIP ' + zip + ')';
+      }
+
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
         msg.textContent = '';
@@ -483,12 +491,12 @@
 
           if(!res.ok) throw new Error(body.error || ('Server error (' + res.status + ')'));
           if(!body.assignedLocation) throw new Error('Server response is missing assigned location.');
-          const assignedZipText = body.assignedZip ? (' (ZIP ' + body.assignedZip + ')') : '';
+          const assignedZipText = assignedZipSuffix(body.assignedLocation, body.assignedZip);
 
           showMessage('Saved. Assigned location: ' + body.assignedLocation + assignedZipText, true);
           const meta = document.createElement('div');
           meta.className = 'meta';
-          meta.textContent = 'You were assigned to: ' + body.assignedLocation + assignedZipText + ' - Thank you, ' + name + '.';
+          meta.textContent = 'You are assigned to a location : ' + body.assignedLocation + assignedZipText;
           msg.appendChild(meta);
           form.reset();
         }catch(err){

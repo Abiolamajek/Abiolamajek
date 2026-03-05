@@ -13,8 +13,8 @@ const SITES = [
 ];
 
 const ZIP_LOCATION_OVERRIDES = {
-  '60642': 'Miracle center',
-  '60431': 'Victory house'
+  '60642': 'Miracle centre (1165 N Milwaukee Avenue Chicago 60642 APT 2105)',
+  '60434': 'Victory house (8401 Foxbourgh Way Joliet IL)'
 };
 
 function contentType(filePath){
