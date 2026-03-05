@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shelter centers by ZIP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --bg-1:#f4efe8;
+        --bg-2:#c7dce6;
+        --bg-3:#d7e9d9;
+        --ink:#1e2a32;
+        --muted:#51606b;
+        --surface:rgba(255,255,255,0.84);
+        --line:rgba(19,34,46,0.16);
+        --accent:#da5b20;
+        --accent-2:#0a8f7b;
+        --radius:20px;
+      }
+
+      *{box-sizing:border-box}
+
+      body{
+        margin:0;
+        min-height:100vh;
+        font-family:'Manrope', 'Segoe UI', Tahoma, sans-serif;
+        color:var(--ink);
+        background:
+          radial-gradient(1200px 700px at 8% -5%, #ffe8ca 0%, transparent 62%),
+          radial-gradient(1000px 600px at 92% 12%, #b9d7ff 0%, transparent 58%),
+          linear-gradient(140deg, var(--bg-1), var(--bg-2) 52%, var(--bg-3));
+        padding:28px 18px 44px;
+      }
+
+      .shell{
+        max-width:880px;
+        margin:0 auto;
+        background:var(--surface);
+        border:1px solid var(--line);
+        border-radius:calc(var(--radius) + 4px);
+        backdrop-filter:blur(8px);
+        box-shadow:
+          0 10px 24px rgba(30,42,50,0.08),
+          0 32px 80px rgba(30,42,50,0.12);
+        padding:28px;
+        animation:fadeUp 0.6s ease-out both;
+      }
+
+      .eyebrow{
+        margin:0 0 10px;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        font-size:12px;
+        letter-spacing:0.11em;
+        text-transform:uppercase;
+        font-weight:800;
+        color:#7b3f00;
+        background:rgba(255,232,201,0.7);
+        border:1px solid rgba(203,124,32,0.35);
+        border-radius:999px;
+        padding:6px 10px;
+      }
+
+      h1{
+        margin:0;
+        font-family:'Playfair Display', Georgia, serif;
+        font-size:clamp(30px, 5vw, 46px);
+        line-height:1.06;
+        letter-spacing:0.01em;
+        max-width:17ch;
+      }
+
+      .intro{
+        margin:12px 0 20px;
+        color:var(--muted);
+        font-size:16px;
+        line-height:1.6;
+        max-width:65ch;
+      }
+
+      .divider{
+        height:1px;
+        background:linear-gradient(90deg, rgba(25,61,84,0.12), rgba(25,61,84,0.02));
+        margin:18px 0 14px;
+      }
+
+      form{
+        margin-top:8px;
+        display:grid;
+        gap:12px;
+        animation:fadeUp 0.75s ease-out both;
+      }
+
+      label{
+        display:block;
+        font-size:13px;
+        font-weight:700;
+        color:#2f3f49;
+        letter-spacing:0.01em;
+      }
+
+      input, select{
+        width:100%;
+        margin-top:7px;
+        padding:12px 13px;
+        border-radius:12px;
+        border:1px solid #bfd1dd;
+        background:rgba(255,255,255,0.92);
+        font-size:15px;
+        color:var(--ink);
+        transition:border-color .18s ease, box-shadow .18s ease, transform .14s ease;
+      }
+
+      input:focus, select:focus{
+        outline:none;
+        border-color:#2a89ad;
+        box-shadow:0 0 0 3px rgba(40,143,175,0.2);
+        transform:translateY(-1px);
+      }
+
+      input::placeholder{color:#90a1ad}
+      select{background:rgba(255,255,255,0.92)}
+
+      .hint{
+        display:block;
+        margin-top:5px;
+        font-size:12px;
+        font-weight:500;
+        color:#697a85;
+      }
+
+      .row{
+        display:grid;
+        grid-template-columns:1fr 120px 120px;
+        gap:10px;
+      }
+
+      button{
+        margin-top:4px;
+        width:100%;
+        border:none;
+        border-radius:14px;
+        padding:13px 16px;
+        font-size:15px;
+        font-weight:800;
+        letter-spacing:0.02em;
+        cursor:pointer;
+        color:#fff;
+        background:linear-gradient(90deg, var(--accent), var(--accent-2));
+        box-shadow:0 10px 18px rgba(45,121,108,0.27);
+        transition:transform .15s ease, filter .15s ease, box-shadow .15s ease;
+      }
+
+      button:hover{
+        transform:translateY(-1px);
+        filter:brightness(1.03);
+        box-shadow:0 14px 22px rgba(45,121,108,0.31);
+      }
+
+      button:disabled{
+        cursor:not-allowed;
+        filter:grayscale(0.22);
+        opacity:0.8;
+        transform:none;
+        box-shadow:none;
+      }
+
+      #message{margin-top:14px}
+
+      .result{
+        border-radius:14px;
+        padding:13px 14px;
+        font-weight:600;
+        border:1px solid transparent;
+        animation:fadeUp .32s ease both;
+      }
+
+      .ok{
+        background:#ecfbf3;
+        border-color:#bce8ce;
+        color:#0f5a31;
+      }
+
+      .err{
+        background:#fff1f1;
+        border-color:#efc5c5;
+        color:#7d1f1f;
+      }
+
+      .meta{
+        margin-top:6px;
+        font-weight:500;
+        font-size:13px;
+        color:#506169;
+      }
+
+      @keyframes fadeUp{
+        from{opacity:0; transform:translateY(10px)}
+        to{opacity:1; transform:translateY(0)}
+      }
+
+      @media (max-width:700px){
+        body{padding:18px 12px 30px}
+        .shell{padding:20px}
+        h1{font-size:clamp(28px, 9vw, 36px)}
+        .intro{font-size:15px}
+        .row{grid-template-columns:1fr}
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <p class="eyebrow">Community Intake</p>
+      <h1>Sign up and get your assigned support location by ZIP</h1>
+      <p class="intro">Enter your contact details below. We will match your ZIP code to the closest center, then save your information for follow-up.</p>
+      <div class="divider"></div>
+
+      <form id="signup" novalidate>
+        <label>Full name
+          <input id="name" name="name" autocomplete="name" required />
+        </label>
+
+        <label>Street address
+          <input id="street" name="street" autocomplete="street-address" list="streetSuggestions" required />
+          <datalist id="streetSuggestions"></datalist>
+          <span class="hint">Start typing to see likely U.S. addresses.</span>
+        </label>
+
+        <div class="row">
+          <label>City
+            <input id="city" name="city" autocomplete="address-level2" required />
+          </label>
+          <label>State
+            <select id="state" name="state" autocomplete="address-level1" required>
+              <option value="">Select state</option>
+              <option value="AL">Alabama</option>
+              <option value="AK">Alaska</option>
+              <option value="AZ">Arizona</option>
+              <option value="AR">Arkansas</option>
+              <option value="CA">California</option>
+              <option value="CO">Colorado</option>
+              <option value="CT">Connecticut</option>
+              <option value="DE">Delaware</option>
+              <option value="FL">Florida</option>
+              <option value="GA">Georgia</option>
+              <option value="HI">Hawaii</option>
+              <option value="ID">Idaho</option>
+              <option value="IL">Illinois</option>
+              <option value="IN">Indiana</option>
+              <option value="IA">Iowa</option>
+              <option value="KS">Kansas</option>
+              <option value="KY">Kentucky</option>
+              <option value="LA">Louisiana</option>
+              <option value="ME">Maine</option>
+              <option value="MD">Maryland</option>
+              <option value="MA">Massachusetts</option>
+              <option value="MI">Michigan</option>
+              <option value="MN">Minnesota</option>
+              <option value="MS">Mississippi</option>
+              <option value="MO">Missouri</option>
+              <option value="MT">Montana</option>
+              <option value="NE">Nebraska</option>
+              <option value="NV">Nevada</option>
+              <option value="NH">New Hampshire</option>
+              <option value="NJ">New Jersey</option>
+              <option value="NM">New Mexico</option>
+              <option value="NY">New York</option>
+              <option value="NC">North Carolina</option>
+              <option value="ND">North Dakota</option>
+              <option value="OH">Ohio</option>
+              <option value="OK">Oklahoma</option>
+              <option value="OR">Oregon</option>
+              <option value="PA">Pennsylvania</option>
+              <option value="RI">Rhode Island</option>
+              <option value="SC">South Carolina</option>
+              <option value="SD">South Dakota</option>
+              <option value="TN">Tennessee</option>
+              <option value="TX">Texas</option>
+              <option value="UT">Utah</option>
+              <option value="VT">Vermont</option>
+              <option value="VA">Virginia</option>
+              <option value="WA">Washington</option>
+              <option value="WV">West Virginia</option>
+              <option value="WI">Wisconsin</option>
+              <option value="WY">Wyoming</option>
+            </select>
+          </label>
+          <label>ZIP
+            <input id="zip" name="zip" inputmode="numeric" pattern="\d{5}" maxlength="5" required />
+          </label>
+        </div>
+
+        <button type="submit" id="submitBtn">Assign My Location</button>
+      </form>
+
+      <div id="message" aria-live="polite"></div>
+    </main>
+
+    <script>
+      const form = document.getElementById('signup');
+      const msg = document.getElementById('message');
+      const submitBtn = document.getElementById('submitBtn');
+      const streetInput = document.getElementById('street');
+      const cityInput = document.getElementById('city');
+      const stateInput = document.getElementById('state');
+      const zipInput = document.getElementById('zip');
+      const streetSuggestions = document.getElementById('streetSuggestions');
+
+      const US_STATES = {
+        AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
+        CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia',
+        HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa',
+        KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland',
+        MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri',
+        MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey',
+        NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio',
+        OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina',
+        SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont',
+        VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming'
+      };
+      const STATE_NAME_TO_ABBR = {};
+      Object.entries(US_STATES).forEach(([abbr, name])=>{
+        STATE_NAME_TO_ABBR[name.toLowerCase()] = abbr;
+      });
+
+      let addressSuggestionTimer = null;
+      let addressSuggestionAbort = null;
+      const suggestionLookup = new Map();
+
+      function clearStreetSuggestions(){
+        suggestionLookup.clear();
+        while(streetSuggestions.firstChild){
+          streetSuggestions.removeChild(streetSuggestions.firstChild);
+        }
+      }
+
+      function firstFiveDigits(input){
+        const match = String(input || '').match(/\d{5}/);
+        return match ? match[0] : '';
+      }
+
+      function getStateCode(address){
+        if(!address) return '';
+        if(address.state_code){
+          const code = String(address.state_code).split('-').pop().toUpperCase();
+          if(US_STATES[code]) return code;
+        }
+        if(address.state){
+          const fromName = STATE_NAME_TO_ABBR[String(address.state).toLowerCase()];
+          if(fromName) return fromName;
+          const raw = String(address.state).toUpperCase().trim();
+          if(US_STATES[raw]) return raw;
+        }
+        return '';
+      }
+
+      function cityFromAddress(address){
+        if(!address) return '';
+        return address.city || address.town || address.village || address.hamlet || address.municipality || address.county || '';
+      }
+
+      function buildAddressQuery(){
+        const street = streetInput.value.trim();
+        if(street.length < 3) return '';
+        const parts = [street];
+        const city = cityInput.value.trim();
+        if(city) parts.push(city);
+        const state = stateInput.value.trim();
+        if(state && US_STATES[state]) parts.push(US_STATES[state]);
+        const zip = firstFiveDigits(zipInput.value.trim());
+        if(zip) parts.push(zip);
+        parts.push('USA');
+        return parts.join(', ');
+      }
+
+      function applyAddressSuggestion(selectedValue){
+        const item = suggestionLookup.get(selectedValue);
+        if(!item || !item.address) return;
+
+        const guessedCity = cityFromAddress(item.address);
+        if(guessedCity) cityInput.value = guessedCity;
+
+        const stateCode = getStateCode(item.address);
+        if(stateCode) stateInput.value = stateCode;
+
+        const guessedZip = firstFiveDigits(item.address.postcode || '');
+        if(guessedZip) zipInput.value = guessedZip;
+      }
+
+      async function fetchAddressSuggestions(){
+        const q = buildAddressQuery();
+        if(!q){
+          clearStreetSuggestions();
+          return;
+        }
+
+        if(addressSuggestionAbort) addressSuggestionAbort.abort();
+        addressSuggestionAbort = new AbortController();
+
+        try{
+          const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=us&limit=6&q=' + encodeURIComponent(q);
+          const res = await fetch(url, { signal: addressSuggestionAbort.signal });
+          if(!res.ok){
+            clearStreetSuggestions();
+            return;
+          }
+
+          const results = await res.json();
+          clearStreetSuggestions();
+
+          if(!Array.isArray(results)) return;
+
+          for(const item of results){
+            if(!item || !item.display_name) continue;
+            const option = document.createElement('option');
+            option.value = item.display_name;
+            streetSuggestions.appendChild(option);
+            suggestionLookup.set(item.display_name, item);
+          }
+        }catch(err){
+          if(err && err.name === 'AbortError') return;
+          clearStreetSuggestions();
+        }
+      }
+
+      streetInput.addEventListener('input', ()=>{
+        const text = streetInput.value.trim();
+        if(addressSuggestionTimer) clearTimeout(addressSuggestionTimer);
+        if(text.length < 3){
+          clearStreetSuggestions();
+          return;
+        }
+        addressSuggestionTimer = setTimeout(fetchAddressSuggestions, 320);
+      });
+
+      streetInput.addEventListener('change', ()=>{
+        applyAddressSuggestion(streetInput.value.trim());
+      });
+
+      function showMessage(text, ok=true){
+        msg.className = 'result ' + (ok? 'ok':'err');
+        msg.textContent = text;
+      }
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        msg.textContent = '';
+        msg.className = '';
+
+        // simple client-side validation
+        const name = document.getElementById('name').value.trim();
+        const street = streetInput.value.trim();
+        const city = cityInput.value.trim();
+        const state = stateInput.value.trim();
+        const zip = firstFiveDigits(zipInput.value.trim());
+
+        if(!name||!street||!city||!state||!/^[0-9]{5}$/.test(zip)){
+          showMessage('Please complete all fields with a valid 5-digit ZIP.', false);
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+
+        try{
+          const res = await fetch('/api/submit',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({name,street,city,state,zip})
+          });
+          const rawBody = await res.text();
+          let body = {};
+          try{
+            body = rawBody ? JSON.parse(rawBody) : {};
+          }catch(parseErr){
+            if(!res.ok) throw new Error('Server returned a non-JSON error (' + res.status + ').');
+            throw new Error('Server returned invalid JSON.');
+          }
+
+          if(!res.ok) throw new Error(body.error || ('Server error (' + res.status + ')'));
+          if(!body.assignedLocation) throw new Error('Server response is missing assigned location.');
+          const assignedZipText = body.assignedZip ? (' (ZIP ' + body.assignedZip + ')') : '';
+
+          showMessage('Saved. Assigned location: ' + body.assignedLocation + assignedZipText, true);
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          meta.textContent = 'You were assigned to: ' + body.assignedLocation + assignedZipText + ' - Thank you, ' + name + '.';
+          msg.appendChild(meta);
+          form.reset();
+        }catch(err){
+          showMessage('Error: ' + (err.message||err), false);
+        }finally{
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit';
+        }
+      });
+    </script>
+  </body>
+</html>

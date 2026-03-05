@@ -1,0 +1,15 @@
+{
+  "name": "zip-assignment-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal ZIP assignment backend with Google Sheets service account writes",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "googleapis": "^132.0.0"
+  }
+}
+

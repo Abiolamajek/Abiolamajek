@@ -1,16 +1,42 @@
-### HELLO there 👋
+# ZIP Assignment App (Minimal Backend)
 
-<!--
-** My Name is Abiolamajek/Abiolamajek** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+## What this does
 
-Here are some ideas to get you started:
+- Serves `index.html`
+- Accepts `POST /api/submit`
+- Assigns nearest location from ZIP
+- Appends submission to Google Sheets using a service account
 
-- 🔭 I’m currently working on PYTHON
-- 🌱 I’m currently learning DEVOPS
-- 💬 Ask me about DevOps TOOLS
-- 😄 Pronouns: HE 
-- ⚡ Fun fact: I LOVE LEARNING NEW THINGS
-connect with me on 
-https://medium.com/@abiolamajekodunmi2011
-linkedin.com/in/abiola-majekodunmi-
-abiolamajekodunmi20@gmail.com
+## Files
+
+- `index.html` - frontend form
+- `server.js` - minimal Node backend
+- `.env` - runtime config
+- `service-account.json` - Google service account key file
+- `package.json` - dependencies and start script
+
+## Setup
+
+1. Share your target Google Sheet with:
+   - `abiola@abiola-489300.iam.gserviceaccount.com`
+2. Check `.env` values:
+   - `SHEET_ID`
+   - `SHEET_NAME`
+   - `SERVICE_ACCOUNT_FILE=service-account.json`
+3. Install dependencies:
+   - `npm install`
+4. Start server:
+   - `npm start`
+5. Open:
+   - `http://localhost:3000`
+
+## Common errors
+
+- `Google Sheets credentials are not configured`
+  - Ensure `service-account.json` exists and `.env` has `SERVICE_ACCOUNT_FILE=service-account.json`.
+
+- `Sheets append failed: ...`
+  - Most often sheet is not shared with the service account email.
+
+- `SHEET_ID is not configured`
+  - Add valid `SHEET_ID` in `.env`.
