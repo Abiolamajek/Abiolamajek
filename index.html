@@ -225,7 +225,8 @@
         </label>
 
         <label>Phone number
-          <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(312) 555-1234" required />
+          <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(312) 555-1234" />
+          <span class="hint">Optional. If entered, use a 10-digit U.S. number.</span>
         </label>
 
         <label>Street address
@@ -236,10 +237,10 @@
 
         <div class="row">
           <label>City
-            <input id="city" name="city" autocomplete="address-level2" required />
+            <input id="city" name="city" autocomplete="address-level2" />
           </label>
           <label>State
-            <select id="state" name="state" autocomplete="address-level1" required>
+            <select id="state" name="state" autocomplete="address-level1">
               <option value="">Select state</option>
               <option value="AL">Alabama</option>
               <option value="AK">Alaska</option>
@@ -470,6 +471,9 @@
         msg.textContent = '';
         msg.className = '';
 
+        // Populate city/state/zip when a suggestion was selected but not blurred.
+        applyAddressSuggestion(streetInput.value.trim());
+
         // simple client-side validation
         const name = document.getElementById('name').value.trim();
         const phone = normalizePhone(phoneInput.value.trim());
@@ -478,8 +482,14 @@
         const state = stateInput.value.trim();
         const zip = firstFiveDigits(zipInput.value.trim());
 
-        if(!name||!street||!city||!state||!/^\d{10}$/.test(phone)||!/^[0-9]{5}$/.test(zip)){
-          showMessage('Please complete all fields with a valid phone number and 5-digit ZIP.', false);
+        const missingOrInvalid = [];
+        if(!name) missingOrInvalid.push('name');
+        if(!street) missingOrInvalid.push('street');
+        if(!/^[0-9]{5}$/.test(zip)) missingOrInvalid.push('ZIP (5 digits)');
+        if(phone && !/^\d{10}$/.test(phone)) missingOrInvalid.push('phone (10 digits)');
+
+        if(missingOrInvalid.length){
+          showMessage('Please provide: ' + missingOrInvalid.join(', ') + '.', false);
           return;
         }
 
@@ -515,7 +525,7 @@
           showMessage('Error: ' + (err.message||err), false);
         }finally{
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Submit';
+          submitBtn.textContent = 'Assign My Location';
         }
       });
     </script>

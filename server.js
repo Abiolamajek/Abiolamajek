@@ -57,7 +57,11 @@ function serveStatic(req, res){
       res.end('Not found');
       return;
     }
-    res.writeHead(200, { 'Content-Type': contentType(filePath) });
+    res.writeHead(200, {
+      'Content-Type': contentType(filePath),
+      // Prevent stale browser cache from serving outdated form markup.
+      'Cache-Control': 'no-store'
+    });
     fs.createReadStream(filePath).pipe(res);
   });
 }
@@ -206,16 +210,22 @@ async function handleSubmit(req, res){
 
     try{
       const name = String(data.name || '').trim();
-      const phone = normalizePhone(data.phone || '');
+      const phone = normalizePhone(data.phone || data.phoneNumber || '');
       const street = String(data.street || '').trim();
       const city = String(data.city || '').trim();
       const state = String(data.state || '').trim();
       const zipMatch = String(data.zip || '').match(/\d{5}/);
       const zip = zipMatch ? zipMatch[0] : '';
 
-      if(!name || !street || !city || !state || !zip || !/^\d{10}$/.test(phone)){
+      if(!name || !street || !zip){
         res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ error: 'name, phone (10 digits), street, city, state, and valid 5-digit zip are required' }));
+        res.end(JSON.stringify({ error: 'name, street, and valid 5-digit zip are required' }));
+        return;
+      }
+
+      if(phone && !/^\d{10}$/.test(phone)){
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'phone must be 10 digits when provided' }));
         return;
       }
 
