@@ -507,8 +507,12 @@
           try{
             body = rawBody ? JSON.parse(rawBody) : {};
           }catch(parseErr){
-            if(!res.ok) throw new Error('Server returned a non-JSON error (' + res.status + ').');
-            throw new Error('Server returned invalid JSON.');
+            const snippet = String(rawBody || '').replace(/\s+/g, ' ').trim().slice(0, 160);
+            if(!res.ok){
+              const suffix = snippet ? ': ' + snippet : '';
+              throw new Error('Server returned a non-JSON error (' + res.status + ')' + suffix + '.');
+            }
+            throw new Error('Server returned invalid JSON.' + (snippet ? ' Body: ' + snippet : ''));
           }
 
           if(!res.ok) throw new Error(body.error || ('Server error (' + res.status + ')'));

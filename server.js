@@ -66,6 +66,34 @@ function serveStatic(req, res){
   });
 }
 
+function requestPathname(req){
+  try{
+    return new URL(req.url || '/', 'http://localhost').pathname;
+  }catch(err){
+    return '/';
+  }
+}
+
+function isSubmitPath(pathname){
+  return pathname === '/api/submit' || pathname === '/api/submit/';
+}
+
+function writeJson(res, statusCode, payload, extraHeaders = {}){
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json; charset=utf-8',
+    ...extraHeaders
+  });
+  res.end(JSON.stringify(payload));
+}
+
+function apiCorsHeaders(){
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+}
+
 function fetchJson(url){
   return new Promise((resolve, reject)=>{
     const options = new URL(url);
@@ -259,8 +287,27 @@ async function handleSubmit(req, res){
 }
 
 const server = http.createServer((req, res)=>{
-  if(req.method === 'POST' && req.url === '/api/submit'){
-    handleSubmit(req, res);
+  const pathname = requestPathname(req);
+  if(isSubmitPath(pathname)){
+    const corsHeaders = apiCorsHeaders();
+    if(req.method === 'OPTIONS'){
+      res.writeHead(204, corsHeaders);
+      res.end();
+      return;
+    }
+
+    if(req.method === 'POST'){
+      Object.entries(corsHeaders).forEach(([key, value])=> res.setHeader(key, value));
+      handleSubmit(req, res);
+      return;
+    }
+
+    writeJson(res, 405, { error: 'Method Not Allowed. Use POST /api/submit.' }, corsHeaders);
+    return;
+  }
+
+  if(pathname.startsWith('/api/')){
+    writeJson(res, 404, { error: 'API endpoint not found.' });
     return;
   }
 
