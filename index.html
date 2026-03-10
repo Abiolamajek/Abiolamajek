@@ -334,6 +334,10 @@
       Object.entries(US_STATES).forEach(([abbr, name])=>{
         STATE_NAME_TO_ABBR[name.toLowerCase()] = abbr;
       });
+      const SITE_ASSIGNMENTS = [
+        { zip:'60434', name:'Victory house (8401 Foxbourgh Way Joliet IL)' },
+        { zip:'60642', name:'Miracle centre (1165 N Milwaukee Avenue Chicago 60642 APT 2105)' }
+      ];
 
       let addressSuggestionTimer = null;
       let addressSuggestionAbort = null;
@@ -375,6 +379,28 @@
       function cityFromAddress(address){
         if(!address) return '';
         return address.city || address.town || address.village || address.hamlet || address.municipality || address.county || '';
+      }
+
+      function assignedLocationForZip(zip){
+        const safeZip = firstFiveDigits(zip);
+        const exact = SITE_ASSIGNMENTS.find((site)=> site.zip === safeZip);
+        if(exact) return exact.name;
+
+        const targetZip = Number(safeZip);
+        if(Number.isNaN(targetZip)) return SITE_ASSIGNMENTS[0].name;
+
+        let best = SITE_ASSIGNMENTS[0];
+        let bestDelta = Infinity;
+        for(const site of SITE_ASSIGNMENTS){
+          const currentZip = Number(site.zip);
+          if(Number.isNaN(currentZip)) continue;
+          const delta = Math.abs(currentZip - targetZip);
+          if(delta < bestDelta){
+            bestDelta = delta;
+            best = site;
+          }
+        }
+        return best.name;
       }
 
       function buildAddressQuery(){
@@ -586,7 +612,17 @@
         submitBtn.textContent = 'Sending...';
 
         try{
-          const payload = {name,phone,street,city,state,zip};
+          const clientAssignedLocation = assignedLocationForZip(zip);
+          const payload = {
+            name,
+            phone,
+            street,
+            city,
+            state,
+            zip,
+            assignedLocation: clientAssignedLocation,
+            assignedZip: zip
+          };
           const { res, rawBody } = await postSubmission(payload);
           let body = {};
           try{
@@ -601,13 +637,15 @@
           }
 
           if(!res.ok) throw new Error(body.error || ('Server error (' + res.status + ')'));
-          if(!body.assignedLocation) throw new Error('Server response is missing assigned location.');
-          const assignedZipText = assignedZipSuffix(body.assignedLocation, body.assignedZip);
+          const assignedLocation = body.assignedLocation || body.location || (body.ok ? clientAssignedLocation : '');
+          if(!assignedLocation) throw new Error('Server response is missing assigned location.');
+          const assignedZip = body.assignedZip || body.zip || zip;
+          const assignedZipText = assignedZipSuffix(assignedLocation, assignedZip);
 
-          showMessage('Saved. Assigned location: ' + body.assignedLocation + assignedZipText, true);
+          showMessage('Saved. Assigned location: ' + assignedLocation + assignedZipText, true);
           const meta = document.createElement('div');
           meta.className = 'meta';
-          meta.textContent = 'You are assigned to a location : ' + body.assignedLocation + assignedZipText;
+          meta.textContent = 'You are assigned to a location : ' + assignedLocation + assignedZipText;
           msg.appendChild(meta);
           form.reset();
         }catch(err){
