@@ -316,6 +316,7 @@
       const zipInput = document.getElementById('zip');
       const streetSuggestions = document.getElementById('streetSuggestions');
       const HOSTED_API_BASE = 'https://script.google.com/macros/s/AKfycbxG156EzdDOYx4IVBwFhNPSuzd3cQk1zGdarWV3FKE41rq3lbxb1nKBBmbgAnePeD7sZw/exec';
+      const HOSTED_ADMIN_KEY = '5a6d53e25a19fbf117566d9fe391f20908865865b6634b3b5dbc0a3b1b000e32';
 
       const US_STATES = {
         AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
@@ -495,6 +496,24 @@
         return apiBase + '/api/submit';
       }
 
+      function addHostedKeyIfNeeded(url){
+        const key = String(HOSTED_ADMIN_KEY || '').trim();
+        if(!key) return url;
+
+        try{
+          const parsed = new URL(url, window.location.origin);
+          const isAppsScript = parsed.hostname.toLowerCase() === 'script.google.com';
+          const isExecEndpoint = /\/exec$/i.test(parsed.pathname);
+          if(isAppsScript || isExecEndpoint){
+            parsed.searchParams.set('key', key);
+            return parsed.toString();
+          }
+          return url;
+        }catch(err){
+          return url;
+        }
+      }
+
       async function postSubmission(payload){
         const request = {
           method:'POST',
@@ -503,7 +522,7 @@
         };
 
         const apiBase = normalizedApiBase();
-        const primaryUrl = submitUrlForApiBase(apiBase);
+        const primaryUrl = addHostedKeyIfNeeded(submitUrlForApiBase(apiBase));
 
         if(isGithubPagesHost() && !apiBase){
           throw new Error('GitHub Pages is static and cannot run /api/submit. Use http://localhost:3000 or set HOSTED_API_BASE to your deployed backend URL.');
