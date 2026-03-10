@@ -315,7 +315,7 @@
       const stateInput = document.getElementById('state');
       const zipInput = document.getElementById('zip');
       const streetSuggestions = document.getElementById('streetSuggestions');
-      const HOSTED_API_BASE = '';
+      const HOSTED_API_BASE = 'https://script.google.com/macros/s/AKfycbxG156EzdDOYx4IVBwFhNPSuzd3cQk1zGdarWV3FKE41rq3lbxb1nKBBmbgAnePeD7sZw/exec';
 
       const US_STATES = {
         AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
@@ -488,6 +488,13 @@
         return String(HOSTED_API_BASE || '').trim().replace(/\/+$/, '');
       }
 
+      function submitUrlForApiBase(apiBase){
+        if(!apiBase) return '/api/submit';
+        if(/\/api\/submit$/i.test(apiBase)) return apiBase;
+        if(/\/exec$/i.test(apiBase)) return apiBase;
+        return apiBase + '/api/submit';
+      }
+
       async function postSubmission(payload){
         const request = {
           method:'POST',
@@ -496,7 +503,7 @@
         };
 
         const apiBase = normalizedApiBase();
-        const primaryUrl = apiBase ? (apiBase + '/api/submit') : '/api/submit';
+        const primaryUrl = submitUrlForApiBase(apiBase);
 
         if(isGithubPagesHost() && !apiBase){
           throw new Error('GitHub Pages is static and cannot run /api/submit. Use http://localhost:3000 or set HOSTED_API_BASE to your deployed backend URL.');
