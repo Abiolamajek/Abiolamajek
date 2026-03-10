@@ -514,15 +514,29 @@
         }
       }
 
-      async function postSubmission(payload){
-        const request = {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
-        };
+      function isAppsScriptSubmitUrl(url){
+        try{
+          const parsed = new URL(url, window.location.origin);
+          const host = parsed.hostname.toLowerCase();
+          const path = parsed.pathname.toLowerCase();
+          return host === 'script.google.com' || path.endsWith('/exec');
+        }catch(err){
+          return false;
+        }
+      }
 
+      async function postSubmission(payload){
         const apiBase = normalizedApiBase();
         const primaryUrl = addHostedKeyIfNeeded(submitUrlForApiBase(apiBase));
+        const payloadJson = JSON.stringify(payload);
+
+        const request = isAppsScriptSubmitUrl(primaryUrl)
+          ? { method:'POST', body: payloadJson }
+          : {
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              body: payloadJson
+            };
 
         if(isGithubPagesHost() && !apiBase){
           throw new Error('GitHub Pages is static and cannot run /api/submit. Use http://localhost:3000 or set HOSTED_API_BASE to your deployed backend URL.');
