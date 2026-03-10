@@ -466,6 +466,39 @@
         return ' (ZIP ' + zip + ')';
       }
 
+      function isHtmlResponse(rawBody, contentType){
+        const text = String(rawBody || '').trim().toLowerCase();
+        if(String(contentType || '').toLowerCase().includes('text/html')) return true;
+        return text.startsWith('<!doctype html') || text.startsWith('<html');
+      }
+
+      function shouldTryLocalApiFallback(status, rawBody, contentType){
+        const host = String(window.location.hostname || '').toLowerCase();
+        const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+        const isDifferentPort = String(window.location.port || '') !== '3000';
+        return isLocalHost && isDifferentPort && status === 405 && isHtmlResponse(rawBody, contentType);
+      }
+
+      async function postSubmission(payload){
+        const request = {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        };
+
+        const primaryRes = await fetch('/api/submit', request);
+        const primaryBody = await primaryRes.text();
+        const primaryType = primaryRes.headers.get('content-type') || '';
+
+        if(shouldTryLocalApiFallback(primaryRes.status, primaryBody, primaryType)){
+          const fallbackRes = await fetch('http://localhost:3000/api/submit', request);
+          const fallbackBody = await fallbackRes.text();
+          return { res: fallbackRes, rawBody: fallbackBody };
+        }
+
+        return { res: primaryRes, rawBody: primaryBody };
+      }
+
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
         msg.textContent = '';
@@ -497,12 +530,8 @@
         submitBtn.textContent = 'Sending...';
 
         try{
-          const res = await fetch('/api/submit',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({name,phone,street,city,state,zip})
-          });
-          const rawBody = await res.text();
+          const payload = {name,phone,street,city,state,zip};
+          const { res, rawBody } = await postSubmission(payload);
           let body = {};
           try{
             body = rawBody ? JSON.parse(rawBody) : {};
