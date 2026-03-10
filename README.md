@@ -40,3 +40,7 @@
 
 - `SHEET_ID is not configured`
   - Add valid `SHEET_ID` in `.env`.
+
+- `Server returned a non-JSON error (405)` on `https://<user>.github.io/...`
+  - GitHub Pages is static and cannot run the Node backend route `/api/submit`.
+  - Use `http://localhost:3000` for full submit flow, or set `HOSTED_API_BASE` in `index.html` to a deployed backend URL.

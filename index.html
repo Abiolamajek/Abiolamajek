@@ -315,6 +315,7 @@
       const stateInput = document.getElementById('state');
       const zipInput = document.getElementById('zip');
       const streetSuggestions = document.getElementById('streetSuggestions');
+      const HOSTED_API_BASE = '';
 
       const US_STATES = {
         AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
@@ -479,6 +480,14 @@
         return isLocalHost && isDifferentPort && status === 405 && isHtmlResponse(rawBody, contentType);
       }
 
+      function isGithubPagesHost(){
+        return /\.github\.io$/i.test(String(window.location.hostname || ''));
+      }
+
+      function normalizedApiBase(){
+        return String(HOSTED_API_BASE || '').trim().replace(/\/+$/, '');
+      }
+
       async function postSubmission(payload){
         const request = {
           method:'POST',
@@ -486,7 +495,14 @@
           body: JSON.stringify(payload)
         };
 
-        const primaryRes = await fetch('/api/submit', request);
+        const apiBase = normalizedApiBase();
+        const primaryUrl = apiBase ? (apiBase + '/api/submit') : '/api/submit';
+
+        if(isGithubPagesHost() && !apiBase){
+          throw new Error('GitHub Pages is static and cannot run /api/submit. Use http://localhost:3000 or set HOSTED_API_BASE to your deployed backend URL.');
+        }
+
+        const primaryRes = await fetch(primaryUrl, request);
         const primaryBody = await primaryRes.text();
         const primaryType = primaryRes.headers.get('content-type') || '';
 
